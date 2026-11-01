@@ -4,7 +4,7 @@ A full-screen Tech Club arcade timing game with a public leaderboard and a priva
 
 ## Features
 
-- Registration with unique enrollment numbers for each event
+- Registration with unique, exactly 11-character enrollment numbers for each event
 - Millisecond timing with `performance.now()` and immediate STOP capture
 - Database-enforced attempt limits and best-attempt leaderboard sorting
 - Public leaderboard that refreshes every five seconds without showing enrollment numbers
@@ -19,6 +19,8 @@ Use Node.js 20.9 or newer. Run `npm ci`, copy `.env.example` to `.env.local`, se
 ## Database
 
 The database setup is in `supabase/game.sql`. It creates an isolated `game_private` schema and guarded RPC functions in an existing Supabase project. Apply it once using a privileged SQL editor or migration. The SQL generates a random API secret in `game_private.settings`; retrieve that value for `GAME_DB_SECRET` in the server environment. Never expose `GAME_DB_SECRET`, `ADMIN_PASSWORD`, or `SESSION_SECRET` to browser code.
+
+For an existing installation, apply `supabase/enrollment_11_migration.sql` to enforce the 11-character rule for new registrations while preserving older player records.
 
 The private schema is not exposed through the Data API. Public RPCs require the server-held API secret. The Next.js server routes check an HttpOnly participant cookie or a signed admin session before using those RPCs. The enrollment number is never returned by public endpoints.
 

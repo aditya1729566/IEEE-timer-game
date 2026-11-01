@@ -20,7 +20,9 @@ export async function POST(request:NextRequest) {
   try {
     if (Number(request.headers.get('content-length')||0)>2048) return fail('Request too large',413);
     const {name,enrollment}=await request.json();
-    if(typeof name!=='string'||typeof enrollment!=='string'||!currentName(name)||!currentEnrollment(enrollment)) return fail('Enter a valid name and enrollment number');
+    if(typeof name!=='string'||typeof enrollment!=='string'||!currentName(name)) return fail('Enter a valid name and enrollment number');
+    if(enrollment.trim().length!==11) return fail('Enrollment number must be exactly 11 characters');
+    if(!currentEnrollment(enrollment)) return fail('Enrollment number contains invalid characters');
     const existing=await playerHash();
     if(existing) {
       const participant=await rpc<PrivateParticipant|null>('challenge_status',{p_token_hash:existing});
@@ -36,4 +38,4 @@ export async function POST(request:NextRequest) {
   } catch(e) { return errorResponse(e); }
 }
 function currentName(v:string) {return /^[A-Za-z][A-Za-z .'-]{1,59}$/.test(v.trim())}
-function currentEnrollment(v:string) {return /^[A-Za-z0-9][A-Za-z0-9/_-]{2,31}$/.test(v.trim())}
+function currentEnrollment(v:string) {return /^[A-Za-z0-9][A-Za-z0-9/_-]{10}$/.test(v.trim())}

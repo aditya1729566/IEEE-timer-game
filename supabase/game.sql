@@ -11,7 +11,7 @@ create table if not exists game_private.participants (
   id uuid primary key default gen_random_uuid(),
   event_id uuid not null,
   name text not null check (char_length(name) between 2 and 60),
-  enrollment text not null check (char_length(enrollment) between 3 and 32),
+  enrollment text not null check (char_length(enrollment) = 11),
   token_hash text not null unique,
   created_at timestamptz not null default now(),
   unique(event_id,enrollment)
@@ -37,7 +37,8 @@ begin
  if p_secret is distinct from s.api_secret then raise exception 'Access denied'; end if;
  p_name := btrim(regexp_replace(coalesce(p_name,''),'\s+',' ','g'));
  p_enrollment := upper(btrim(coalesce(p_enrollment,'')));
- if p_name !~ '^[[:alpha:]][[:alpha:] .''-]{1,59}$' or p_enrollment !~ '^[A-Z0-9][A-Z0-9/_-]{2,31}$' or p_token_hash !~ '^[a-f0-9]{64}$' then raise exception 'Enter a valid name and enrollment number'; end if;
+ if char_length(p_enrollment) <> 11 then raise exception 'Enrollment number must be exactly 11 characters'; end if;
+ if p_name !~ '^[[:alpha:]][[:alpha:] .''-]{1,59}$' or p_enrollment !~ '^[A-Z0-9][A-Z0-9/_-]{10}$' or p_token_hash !~ '^[a-f0-9]{64}$' then raise exception 'Enter a valid name and enrollment number'; end if;
  insert into game_private.participants(event_id,name,enrollment,token_hash)
  values(s.event_id,p_name,p_enrollment,p_token_hash) returning * into p;
  return jsonb_build_object('name',p.name,'remaining',s.max_attempts,'maxAttempts',s.max_attempts,'attempts',0);
