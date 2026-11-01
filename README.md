@@ -33,5 +33,6 @@ Changing the admin password requires updating `ADMIN_PASSWORD` in Vercel and red
 The default is one attempt per player. Admins can set 1–20 attempts. Starting a new event changes the active event ID: old records remain in the private database, while the current leaderboard and registrations start fresh. Players must register again for the new event.
 
 After a result, the screen counts down from 10 seconds before handing the device to the next player. A player with attempts left can choose **Play Again** during the countdown, or enter the same name and enrollment number on the handoff screen while their session remains on that device.
+The **Go to Entry + Leaderboard** button skips the countdown and opens the handoff screen immediately.
 
 Browser timing is accurate for normal play, but browser clocks and client requests are ultimately controlled by participants. For prize-bearing competitions, supervise the stall and review suspicious scores.
