@@ -3,24 +3,32 @@ import { rpc } from '@/lib/db';
 import { clearPlayer, clearRun, hashToken, newToken, playerHash, setPlayer } from '@/lib/security';
 import { errorResponse, fail, ok } from '@/lib/http';
 export const dynamic='force-dynamic';
+type PrivateParticipant={name:string;enrollment:string;remaining:number;maxAttempts:number;attempts:number;bestMs?:number|null;bestDifferenceMs?:number|null};
+function publicParticipant(participant:PrivateParticipant){const {enrollment:_enrollment,...publicData}=participant;return publicData;}
 
 export async function GET() {
   try {
     await clearRun();
     const hash=await playerHash();
     if (!hash) return ok({participant:null});
-    const participant=await rpc('challenge_status',{p_token_hash:hash});
+    const participant=await rpc<PrivateParticipant|null>('challenge_status',{p_token_hash:hash});
     if (!participant) await clearPlayer();
-    return ok({participant});
+    return ok({participant:participant?publicParticipant(participant):null});
   } catch(e) { return errorResponse(e); }
 }
 export async function POST(request:NextRequest) {
   try {
     if (Number(request.headers.get('content-length')||0)>2048) return fail('Request too large',413);
-    const existing=await playerHash();
-    if(existing) { const participant=await rpc('challenge_status',{p_token_hash:existing}); if(participant) return ok({participant}); }
     const {name,enrollment}=await request.json();
     if(typeof name!=='string'||typeof enrollment!=='string'||!currentName(name)||!currentEnrollment(enrollment)) return fail('Enter a valid name and enrollment number');
+    const existing=await playerHash();
+    if(existing) {
+      const participant=await rpc<PrivateParticipant|null>('challenge_status',{p_token_hash:existing});
+      if(participant && participant.name.toLowerCase()===name.trim().replace(/\s+/g,' ').toLowerCase() && participant.enrollment===enrollment.trim().toUpperCase()) {
+        if(participant.remaining<=0) return fail('You have used all attempts for this event',409);
+        return ok({participant:publicParticipant(participant)});
+      }
+    }
     const token=newToken();
     const participant=await rpc('challenge_register',{p_name:name,p_enrollment:enrollment,p_token_hash:hashToken(token)});
     await setPlayer(token);

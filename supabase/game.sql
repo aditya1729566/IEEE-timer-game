@@ -54,7 +54,7 @@ begin
  if not found then return null; end if;
  select count(*) into n from game_private.attempts where participant_id=p.id and event_id=s.event_id;
  select elapsed_ms,difference_ms into best from game_private.attempts where participant_id=p.id and event_id=s.event_id order by difference_ms,created_at limit 1;
- return jsonb_build_object('name',p.name,'remaining',greatest(0,s.max_attempts-n),'maxAttempts',s.max_attempts,'attempts',n,'bestMs',best.elapsed_ms,'bestDifferenceMs',best.difference_ms);
+ return jsonb_build_object('name',p.name,'enrollment',p.enrollment,'remaining',greatest(0,s.max_attempts-n),'maxAttempts',s.max_attempts,'attempts',n,'bestMs',best.elapsed_ms,'bestDifferenceMs',best.difference_ms);
 end $$;
 
 create or replace function public.challenge_submit(p_secret text,p_token_hash text,p_elapsed_ms int)
